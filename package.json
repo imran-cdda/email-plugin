@@ -2,8 +2,8 @@
   "name": "mdu",
   "version": "1.0.0",
   "description": "A simple date formatting utility using dayjs.",
-  "main": "./index.ts",
-  "types": "./index.d.ts",
+  "main": "dist/index.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc"
