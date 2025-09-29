@@ -1,7 +1,7 @@
 {
-  "name": "mdu",
+  "name": "quick-mailer",
   "version": "1.0.0",
-  "description": "A simple date formatting utility using dayjs.",
+  "description": "Email plugin for better-auth.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -9,13 +9,19 @@
     "build": "tsc"
   },
   "keywords": [
-    "date",
-    "format",
-    "dayjs"
+    "better-auth plugin",
+    "email plugin",
+    "email",
+    "plugin"
   ],
   "author": "imran-cdda",
   "license": "MIT",
   "dependencies": {
-    "dayjs": "^1.11.18"
+    "better-auth": "^1.3.23",
+    "resend": "^6.1.0",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2"
   }
 }
