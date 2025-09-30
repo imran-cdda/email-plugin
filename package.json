@@ -17,6 +17,7 @@
   "author": "imran-cdda",
   "license": "MIT",
   "dependencies": {
+    "@getbrevo/brevo": "^3.0.1",
     "better-auth": "^1.3.23",
     "resend": "^6.1.0",
     "zod": "^4.1.11"
