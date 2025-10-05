@@ -1,7 +1,6 @@
 import type { BetterAuthPlugin } from "better-auth";
 import { APIError, sessionMiddleware } from "better-auth/api";
 import { createAuthEndpoint } from "better-auth/plugins";
-import { QMResend } from "./resend";
 import { z } from "zod";
 
 import { getSchema } from "./schema";
@@ -1115,7 +1114,6 @@ const passwordResetEmailTemplate = (
 </div>
 `;
 
-export * from "./adapters";
 export * from "./types";
 export * from "./utils";
-export { EMAIL_ERROR_CODES, QMResend };
+export { EMAIL_ERROR_CODES };

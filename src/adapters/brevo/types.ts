@@ -218,7 +218,7 @@ export type WebhookEvent =
   | "error"
   | "loadedByProxy";
 
-export type AddDomainApiResponse = {
+export type AddDomainResponse = {
   id?: string;
   domain_name?: string;
   message: string;
@@ -236,4 +236,30 @@ export type AddDomainApiResponse = {
       status: boolean;
     };
   };
+};
+
+export type DomainResponse = {
+  domains: {
+    id: string;
+    domain_name: string;
+    authenticated: boolean;
+    verified: boolean;
+    validationRequest: string | null;
+    verifier: string | null;
+    authenticator: string | null;
+    creator: {
+      id: string;
+      email: string;
+      method: string | null;
+      creationDate: string; // ISO timestamp
+    };
+    ip: string | null;
+  }[];
+  count: number;
+  current_page: number;
+  total_pages: number;
+};
+
+export type deleteDomainResponse = {
+  message: string;
 };

@@ -1,4 +1,3 @@
-import { QMResend } from "./resend";
 import { z } from "zod";
 import type { DatabaseEmailLog, EmailOptions, EmailStats, GetEmailLogsQuery } from "./types";
 declare const EMAIL_ERROR_CODES: {
@@ -762,7 +761,6 @@ export declare class EmailService {
         name?: string;
     }, resetUrl: string): Promise<any>;
 }
-export * from "./adapters";
 export * from "./types";
 export * from "./utils";
-export { EMAIL_ERROR_CODES, QMResend };
+export { EMAIL_ERROR_CODES };

@@ -1,6 +1,5 @@
 import { APIError, sessionMiddleware } from "better-auth/api";
 import { createAuthEndpoint } from "better-auth/plugins";
-import { QMResend } from "./resend";
 import { z } from "zod";
 import { getSchema } from "./schema";
 import { arrayToString, calculateEmailStats, determineContentType, generateEmailId, parseResendWebhook, sanitizeEmailContent, validateEmailArray, } from "./utils";
@@ -844,7 +843,6 @@ const passwordResetEmailTemplate = (user, resetUrl) => `
   </p>
 </div>
 `;
-export * from "./adapters";
 export * from "./types";
 export * from "./utils";
-export { EMAIL_ERROR_CODES, QMResend };
+export { EMAIL_ERROR_CODES };
