@@ -4,8 +4,10 @@ import {
   SendSmtpEmail,
 } from "@getbrevo/brevo";
 import {
-  AddDomainApiResponse,
+  AddDomainResponse,
   BatchEmailConfig,
+  deleteDomainResponse,
+  DomainResponse,
   EmailAttachment,
   EmailContact,
   EmailSendResponse,
@@ -20,21 +22,50 @@ import {
  * Comprehensive Brevo Email Sender with full type safety
  * Supports all Brevo transactional email features
  */
-export class BrevoEmailSender {
+export class BrevoEmailAdapter {
   private api: TransactionalEmailsApi;
   private defaultSender?: EmailContact;
-  private apiKey: string = "";
+  private apiKey: string = process.env.BREVO_API_KEY || "";
+  private readonly baseDomain =
+    process.env.BREVO_BASE_DOMAIN || "https://api.brevo.com/v3";
 
   /**
    * Initialize Brevo Email Sender
    * @param apiKey - Your Brevo API key
    * @param defaultSender - Optional default sender for all emails
    */
-  constructor(apiKey: string, defaultSender?: EmailContact) {
+  constructor(defaultSender?: EmailContact) {
     this.api = new TransactionalEmailsApi();
-    this.api.setApiKey(TransactionalEmailsApiApiKeys.apiKey, apiKey);
-    this.apiKey = apiKey;
+    this.api.setApiKey(TransactionalEmailsApiApiKeys.apiKey, this.apiKey);
     this.defaultSender = defaultSender;
+  }
+
+  private async executeRequest(url: string, method: string, body?: string) {
+    try {
+      const response = await fetch(`${this.baseDomain}${url}`, {
+        method,
+        body,
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": this.apiKey,
+        },
+      });
+      if (!response.ok) {
+        return {
+          success: false,
+          message: await response.text(),
+        };
+      }
+      return {
+        success: true,
+        data: await response.json(),
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: (error as Error).message,
+      };
+    }
   }
 
   // ==========================================================================
@@ -293,26 +324,38 @@ export class BrevoEmailSender {
 
   /**
    * Add a domain to the list of blocked domains
-   * @param domain - Domain to add
+   * @param domain - Domain to
    * @returns Promise with added domain
    */
-  async addDomain(domain: string): Promise<AddDomainApiResponse> {
-    const path = "https://api.brevo.com/v3/senders/domains";
-    try {
-      const response = await fetch(path, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api-key": this.apiKey,
-        },
-        body: JSON.stringify({ domain }),
-      });
-      return response.json();
-    } catch (error) {
-      return {
-        message: "Unknown error",
-      };
-    }
+  async addDomain(domain: string): Promise<AddDomainResponse> {
+    const response = await this.executeRequest(
+      "/senders/domains",
+      "POST",
+      JSON.stringify({ name: domain })
+    );
+    return response.data;
+  }
+
+  /**
+   * Get list of domains
+   * @returns Promise with domain list
+   */
+  async getDomains(): Promise<DomainResponse> {
+    const response = await this.executeRequest("/senders/domains", "GET");
+    return response.data;
+  }
+
+  /**
+   * Delete a domain from the list of domains
+   * @param domain - Domain to delete
+   * @returns Promise with deleted domain
+   */
+  async deleteDomain(domain: string): Promise<deleteDomainResponse> {
+    const response = await this.executeRequest(
+      "/senders/domains/" + domain,
+      "DELETE"
+    );
+    return response.data;
   }
 
   /**
@@ -479,4 +522,4 @@ export class BrevoEmailSender {
   }
 }
 
-export default BrevoEmailSender;
+export default BrevoEmailAdapter;

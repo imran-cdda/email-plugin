@@ -1,21 +1,15 @@
-import type { CreateEmailOptions, Resend } from "resend";
-import type {
-  EmailAdapter,
-  EmailAttachment,
-  EmailProvider,
-  SendEmailRequest,
-  SendEmailResponse,
-} from "./types";
+import { CreateEmailOptions, Resend } from "resend";
+import { EmailAttachment, SendEmailRequest, SendEmailResponse } from "./types";
 
 /**
  * Resend email adapter implementation
  */
-export class ResendEmailAdapter implements EmailAdapter {
-  name: EmailProvider = "resend";
-  private resend: Resend;
+export class ResendEmailAdapter {
+  private apiKey: string = process.env.RESEND_API_KEY || "";
+  private resend;
 
-  constructor(resend: Resend) {
-    this.resend = resend;
+  constructor() {
+    this.resend = new Resend(this.apiKey);
   }
 
   async sendEmail(email: SendEmailRequest): Promise<SendEmailResponse> {
@@ -71,7 +65,7 @@ export class ResendEmailAdapter implements EmailAdapter {
     }
   }
 
-  async sendBulkEmails(
+  async sendBatchEmails(
     emails: SendEmailRequest[]
   ): Promise<SendEmailResponse[]> {
     const results: SendEmailResponse[] = [];
@@ -99,53 +93,5 @@ export class ResendEmailAdapter implements EmailAdapter {
     }
 
     return results;
-  }
-}
-
-/**
- * Placeholder for SendGrid adapter
- */
-export class SendGridEmailAdapter implements EmailAdapter {
-  name: EmailProvider = "sendgrid";
-
-  constructor(apiKey: string) {
-    // TODO: Initialize SendGrid client
-    console.log("SendGrid adapter initialized with API key:", apiKey);
-  }
-
-  async sendEmail(_email: SendEmailRequest): Promise<SendEmailResponse> {
-    // TODO: Implement SendGrid email sending
-    throw new Error("SendGrid adapter not yet implemented");
-  }
-
-  async sendBulkEmails(
-    _emails: SendEmailRequest[]
-  ): Promise<SendEmailResponse[]> {
-    // TODO: Implement SendGrid bulk email sending
-    throw new Error("SendGrid bulk adapter not yet implemented");
-  }
-}
-
-/**
- * Placeholder for Bravo adapter
- */
-export class BravoEmailAdapter implements EmailAdapter {
-  name: EmailProvider = "bravo";
-
-  constructor(apiKey: string) {
-    // TODO: Initialize Bravo client
-    console.log("Bravo adapter initialized with API key:", apiKey);
-  }
-
-  async sendEmail(_email: SendEmailRequest): Promise<SendEmailResponse> {
-    // TODO: Implement Bravo email sending
-    throw new Error("Bravo adapter not yet implemented");
-  }
-
-  async sendBulkEmails(
-    _emails: SendEmailRequest[]
-  ): Promise<SendEmailResponse[]> {
-    // TODO: Implement Bravo bulk email sending
-    throw new Error("Bravo bulk adapter not yet implemented");
   }
 }
