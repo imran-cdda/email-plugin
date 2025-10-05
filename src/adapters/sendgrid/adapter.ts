@@ -28,13 +28,13 @@ import {
   SendEmailRequest,
   SendEmailResponse,
 } from "../types";
+import { baseAdapter } from "../base";
 
 /**
  * Comprehensive SendGrid Email Adapter with full type safety
  * Supports all SendGrid transactional email features
  */
-export class SendGridEmailAdapter implements EmailAdapter {
-  name: EmailProvider = "sendgrid";
+export class SendGridEmailAdapter extends baseAdapter {
   private mailService: MailService;
   private defaultSender?: EmailContact;
   private apiKey: string;
@@ -45,6 +45,7 @@ export class SendGridEmailAdapter implements EmailAdapter {
    * @param defaultSender - Optional default sender for all emails
    */
   constructor(apiKey?: string, defaultSender?: EmailContact) {
+    super("sendgrid");
     this.apiKey = apiKey || process.env.SENDGRID_API_KEY || "";
 
     if (!this.apiKey) {

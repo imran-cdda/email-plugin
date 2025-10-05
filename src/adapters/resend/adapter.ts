@@ -6,16 +6,17 @@ import {
   SendEmailRequest,
   SendEmailResponse,
 } from "./types";
+import { baseAdapter } from "../base";
 
 /**
  * Resend email adapter implementation
  */
-export class ResendEmailAdapter implements EmailAdapter {
+export class ResendEmailAdapter extends baseAdapter {
   private apiKey: string = process.env.RESEND_API_KEY || "";
-  name: EmailProvider = "resend";
   private resend;
 
   constructor() {
+    super("resend");
     this.resend = new Resend(this.apiKey);
   }
 

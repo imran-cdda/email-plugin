@@ -2,13 +2,7 @@ import { z } from "zod";
 
 // Validation schemas
 export const sendEmailSchema = z.object({
-  to: z.union([
-    z.object({
-      email: z.email(),
-      name: z.string().optional(),
-    }),
-    z.array(z.object({ email: z.email(), name: z.string().optional() })),
-  ]),
+  to: z.array(z.object({ email: z.email(), name: z.string().optional() })),
   from: z.object({
     email: z.email(),
     name: z.string().optional(),
@@ -16,20 +10,12 @@ export const sendEmailSchema = z.object({
   subject: z.string().min(1),
   html: z.string().optional(),
   text: z.string().optional(),
-  cc: z.union([
-    z.object({
-      email: z.email(),
-      name: z.string().optional(),
-    }),
-    z.array(z.object({ email: z.email(), name: z.string().optional() })),
-  ]),
-  bcc: z.union([
-    z.object({
-      email: z.email(),
-      name: z.string().optional(),
-    }),
-    z.array(z.object({ email: z.email(), name: z.string().optional() })),
-  ]),
+  cc: z
+    .array(z.object({ email: z.email(), name: z.string().optional() }))
+    .optional(),
+  bcc: z
+    .array(z.object({ email: z.email(), name: z.string().optional() }))
+    .optional(),
   replyTo: z.object({
     email: z.email(),
     name: z.string().optional(),

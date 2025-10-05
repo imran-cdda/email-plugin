@@ -5,6 +5,7 @@ import type {
   sendEmailSchema,
   webhookEventSchema,
 } from "./schema";
+import { baseAdapter } from "./adapters/base";
 
 // Better Auth Adapter interface for type safety
 export interface BetterAuthAdapter {
@@ -148,10 +149,9 @@ export interface InputEmailLog {
 }
 
 // Email adapter interface
-export interface EmailAdapter {
+export interface EmailAdapter<T extends baseAdapter = baseAdapter> {
   name: EmailProvider;
-  sendEmail(email: SendEmailRequest): Promise<SendEmailResponse>;
-  sendBulkEmails(emails: SendEmailRequest[]): Promise<SendEmailResponse[]>;
+  adapter: T;
 }
 
 // Request/Response Types
