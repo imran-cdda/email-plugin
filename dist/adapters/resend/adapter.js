@@ -1,11 +1,12 @@
 import { Resend } from "resend";
+import { baseAdapter } from "../base";
 /**
  * Resend email adapter implementation
  */
-export class ResendEmailAdapter {
+export class ResendEmailAdapter extends baseAdapter {
     constructor() {
+        super("resend");
         this.apiKey = process.env.RESEND_API_KEY || "";
-        this.name = "resend";
         this.resend = new Resend(this.apiKey);
     }
     async sendEmail(email) {

@@ -1,12 +1,9 @@
 import { z } from "zod";
 export declare const sendEmailSchema: z.ZodObject<{
-    to: z.ZodUnion<readonly [z.ZodObject<{
+    to: z.ZodArray<z.ZodObject<{
         email: z.ZodEmail;
         name: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>, z.ZodArray<z.ZodObject<{
-        email: z.ZodEmail;
-        name: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>>]>;
+    }, z.core.$strip>>;
     from: z.ZodObject<{
         email: z.ZodEmail;
         name: z.ZodOptional<z.ZodString>;
@@ -14,20 +11,14 @@ export declare const sendEmailSchema: z.ZodObject<{
     subject: z.ZodString;
     html: z.ZodOptional<z.ZodString>;
     text: z.ZodOptional<z.ZodString>;
-    cc: z.ZodUnion<readonly [z.ZodObject<{
+    cc: z.ZodOptional<z.ZodArray<z.ZodObject<{
         email: z.ZodEmail;
         name: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>, z.ZodArray<z.ZodObject<{
+    }, z.core.$strip>>>;
+    bcc: z.ZodOptional<z.ZodArray<z.ZodObject<{
         email: z.ZodEmail;
         name: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>>]>;
-    bcc: z.ZodUnion<readonly [z.ZodObject<{
-        email: z.ZodEmail;
-        name: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>, z.ZodArray<z.ZodObject<{
-        email: z.ZodEmail;
-        name: z.ZodOptional<z.ZodString>;
-    }, z.core.$strip>>]>;
+    }, z.core.$strip>>>;
     replyTo: z.ZodObject<{
         email: z.ZodEmail;
         name: z.ZodOptional<z.ZodString>;
@@ -45,13 +36,10 @@ export declare const sendEmailSchema: z.ZodObject<{
 }, z.core.$strip>;
 export declare const bulkSendEmailSchema: z.ZodObject<{
     emails: z.ZodArray<z.ZodObject<{
-        to: z.ZodUnion<readonly [z.ZodObject<{
+        to: z.ZodArray<z.ZodObject<{
             email: z.ZodEmail;
             name: z.ZodOptional<z.ZodString>;
-        }, z.core.$strip>, z.ZodArray<z.ZodObject<{
-            email: z.ZodEmail;
-            name: z.ZodOptional<z.ZodString>;
-        }, z.core.$strip>>]>;
+        }, z.core.$strip>>;
         from: z.ZodObject<{
             email: z.ZodEmail;
             name: z.ZodOptional<z.ZodString>;
@@ -59,20 +47,14 @@ export declare const bulkSendEmailSchema: z.ZodObject<{
         subject: z.ZodString;
         html: z.ZodOptional<z.ZodString>;
         text: z.ZodOptional<z.ZodString>;
-        cc: z.ZodUnion<readonly [z.ZodObject<{
+        cc: z.ZodOptional<z.ZodArray<z.ZodObject<{
             email: z.ZodEmail;
             name: z.ZodOptional<z.ZodString>;
-        }, z.core.$strip>, z.ZodArray<z.ZodObject<{
+        }, z.core.$strip>>>;
+        bcc: z.ZodOptional<z.ZodArray<z.ZodObject<{
             email: z.ZodEmail;
             name: z.ZodOptional<z.ZodString>;
-        }, z.core.$strip>>]>;
-        bcc: z.ZodUnion<readonly [z.ZodObject<{
-            email: z.ZodEmail;
-            name: z.ZodOptional<z.ZodString>;
-        }, z.core.$strip>, z.ZodArray<z.ZodObject<{
-            email: z.ZodEmail;
-            name: z.ZodOptional<z.ZodString>;
-        }, z.core.$strip>>]>;
+        }, z.core.$strip>>>;
         replyTo: z.ZodObject<{
             email: z.ZodEmail;
             name: z.ZodOptional<z.ZodString>;

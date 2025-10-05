@@ -1,12 +1,7 @@
 import { CreateEmailOptions, Resend } from "resend";
-import {
-  EmailAdapter,
-  EmailAttachment,
-  EmailProvider,
-  SendEmailRequest,
-  SendEmailResponse,
-} from "./types";
+import { EmailAdapter, EmailAttachment, EmailProvider } from "./types";
 import { baseAdapter } from "../base";
+import { SendEmailRequest, SendEmailResponse } from "../types";
 
 /**
  * Resend email adapter implementation

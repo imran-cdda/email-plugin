@@ -1,6 +1,7 @@
 import type { Session, User } from "better-auth";
 import type { z } from "zod";
 import type { bulkSendEmailSchema, sendEmailSchema, webhookEventSchema } from "./schema";
+import { baseAdapter } from "./adapters/base";
 export interface BetterAuthAdapter {
     findOne<T = DatabaseEmailLog>(options: {
         model: string;
@@ -127,10 +128,9 @@ export interface InputEmailLog {
     tags?: string;
     userId?: string;
 }
-export interface EmailAdapter {
+export interface EmailAdapter<T extends baseAdapter = baseAdapter> {
     name: EmailProvider;
-    sendEmail(email: SendEmailRequest): Promise<SendEmailResponse>;
-    sendBulkEmails(emails: SendEmailRequest[]): Promise<SendEmailResponse[]>;
+    adapter: T;
 }
 export type SendEmailRequest = z.infer<typeof sendEmailSchema>;
 export type BulkSendEmailRequest = z.infer<typeof bulkSendEmailSchema>;

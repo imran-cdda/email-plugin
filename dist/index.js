@@ -62,18 +62,24 @@ export const email = (options) => {
             method: "POST",
             body: z
                 .object({
-                to: z.union([z.string().email(), z.array(z.string().email())]),
-                from: z.string().email().optional(),
+                to: z.array(z.object({ email: z.email(), name: z.string().optional() })),
+                from: z.object({
+                    email: z.email(),
+                    name: z.string().optional(),
+                }),
                 subject: z.string().min(1),
                 html: z.string().optional(),
                 text: z.string().optional(),
                 cc: z
-                    .union([z.string().email(), z.array(z.string().email())])
+                    .array(z.object({ email: z.email(), name: z.string().optional() }))
                     .optional(),
                 bcc: z
-                    .union([z.string().email(), z.array(z.string().email())])
+                    .array(z.object({ email: z.email(), name: z.string().optional() }))
                     .optional(),
-                replyTo: z.string().email().optional(),
+                replyTo: z.object({
+                    email: z.email(),
+                    name: z.string().optional(),
+                }),
                 tags: z
                     .array(z.object({
                     name: z.string(),
@@ -82,6 +88,7 @@ export const email = (options) => {
                     .optional(),
                 attachments: z
                     .array(z.object({
+                    url: z.string().optional(),
                     filename: z.string(),
                     content: z.union([z.string(), z.instanceof(Buffer)]),
                     contentType: z.string().optional(),
@@ -100,12 +107,12 @@ export const email = (options) => {
             }
             try {
                 // Validate email addresses
-                const toEmails = validateEmailArray(ctx.body.to);
+                const toEmails = validateEmailArray(ctx.body.to.map((email) => email.email));
                 const ccEmails = ctx.body.cc
-                    ? validateEmailArray(ctx.body.cc)
+                    ? validateEmailArray(ctx.body.cc.map((email) => email.email))
                     : undefined;
                 const bccEmails = ctx.body.bcc
-                    ? validateEmailArray(ctx.body.bcc)
+                    ? validateEmailArray(ctx.body.bcc.map((email) => email.email))
                     : undefined;
                 // Use provided from address or default
                 const fromAddress = ctx.body.from || options?.fromAddress;
@@ -133,11 +140,13 @@ export const email = (options) => {
                 const emailLogId = generateEmailId();
                 const contentType = determineContentType(ctx.body.html, ctx.body.text);
                 const emailLogData = {
-                    fromAddress,
+                    fromAddress: fromAddress.email,
                     toAddress: arrayToString(toEmails) || toEmails[0],
                     ccAddress: arrayToString(ccEmails),
                     bccAddress: arrayToString(bccEmails),
-                    replyToAddress: ctx.body.replyTo || options?.replyToAddress,
+                    replyToAddress: ctx.body.replyTo
+                        ? ctx.body.replyTo.email
+                        : options?.replyToAddress,
                     subject: ctx.body.subject,
                     content: sanitizeEmailContent(ctx.body.html || ctx.body.text || ""),
                     contentType,
@@ -147,7 +156,7 @@ export const email = (options) => {
                     tags: ctx.body.tags ? JSON.stringify(ctx.body.tags) : undefined,
                 };
                 // Send email
-                const sendResult = await adapter.sendEmail(emailRequest);
+                const sendResult = await adapter.adapter.sendEmail(emailRequest);
                 // Update email log data based on send result
                 if (sendResult.success) {
                     // Success: save provider ID (message ID) and mark as sent
@@ -215,12 +224,15 @@ export const email = (options) => {
                     html: z.string().optional(),
                     text: z.string().optional(),
                     cc: z
-                        .union([z.string().email(), z.array(z.string().email())])
+                        .array(z.object({ email: z.email(), name: z.string().optional() }))
                         .optional(),
                     bcc: z
-                        .union([z.string().email(), z.array(z.string().email())])
+                        .array(z.object({ email: z.email(), name: z.string().optional() }))
                         .optional(),
-                    replyTo: z.string().email().optional(),
+                    replyTo: z.object({
+                        email: z.email(),
+                        name: z.string().optional(),
+                    }),
                     tags: z
                         .array(z.object({
                         name: z.string(),
@@ -247,8 +259,11 @@ export const email = (options) => {
                 // Prepare email requests
                 const emailRequests = ctx.body.emails.map((email) => ({
                     ...email,
-                    from: email.from || options?.fromAddress || "",
+                    from: { email: email.from || options?.fromAddress || "" },
                     replyTo: email.replyTo || options?.replyToAddress,
+                    to: Array.isArray(email.to)
+                        ? email.to.map((to) => ({ email: to }))
+                        : [{ email: email.to }],
                 }));
                 // Validate all emails have from addresses
                 for (const email of emailRequests) {
@@ -257,7 +272,7 @@ export const email = (options) => {
                     }
                 }
                 // Send bulk emails
-                const sendResults = await adapter.sendBulkEmails(emailRequests);
+                const sendResults = await adapter.adapter.sendBulkEmails(emailRequests);
                 // Create email log entries for each email
                 const emailLogs = [];
                 for (let i = 0; i < emailRequests.length; i++) {
@@ -265,17 +280,17 @@ export const email = (options) => {
                     const result = sendResults[i];
                     const emailLogId = generateEmailId();
                     const contentType = determineContentType(email.html, email.text);
-                    const toEmails = validateEmailArray(email.to);
+                    const toEmails = validateEmailArray(email.to.map((to) => to.email));
                     const emailLogData = {
-                        fromAddress: email.from,
+                        fromAddress: email.from.email,
                         toAddress: arrayToString(toEmails) || toEmails[0],
                         ccAddress: email.cc
-                            ? arrayToString(validateEmailArray(email.cc))
+                            ? arrayToString(validateEmailArray(email.cc.map((cc) => cc.email)))
                             : undefined,
                         bccAddress: email.bcc
-                            ? arrayToString(validateEmailArray(email.bcc))
+                            ? arrayToString(validateEmailArray(email.bcc.map((bcc) => bcc.email)))
                             : undefined,
-                        replyToAddress: email.replyTo,
+                        replyToAddress: email.replyTo.email,
                         subject: email.subject,
                         content: sanitizeEmailContent(email.html || email.text || ""),
                         contentType,
@@ -465,18 +480,21 @@ export const email = (options) => {
             method: "POST",
             body: z
                 .object({
-                to: z.union([z.string().email(), z.array(z.string().email())]),
+                to: z.array(z.object({ email: z.email(), name: z.string().optional() })),
                 from: z.string().email().optional(),
                 subject: z.string().min(1),
                 html: z.string().optional(),
                 text: z.string().optional(),
                 cc: z
-                    .union([z.string().email(), z.array(z.string().email())])
+                    .array(z.object({ email: z.email(), name: z.string().optional() }))
                     .optional(),
                 bcc: z
-                    .union([z.string().email(), z.array(z.string().email())])
+                    .array(z.object({ email: z.email(), name: z.string().optional() }))
                     .optional(),
-                replyTo: z.string().email().optional(),
+                replyTo: z.object({
+                    email: z.email(),
+                    name: z.string().optional(),
+                }),
                 tags: z
                     .array(z.object({
                     name: z.string(),
@@ -495,12 +513,12 @@ export const email = (options) => {
         }, async (ctx) => {
             try {
                 // Validate email addresses
-                const toEmails = validateEmailArray(ctx.body.to);
+                const toEmails = validateEmailArray(ctx.body.to.map((email) => email.email));
                 const ccEmails = ctx.body.cc
-                    ? validateEmailArray(ctx.body.cc)
+                    ? validateEmailArray(ctx.body.cc.map((email) => email.email))
                     : undefined;
                 const bccEmails = ctx.body.bcc
-                    ? validateEmailArray(ctx.body.bcc)
+                    ? validateEmailArray(ctx.body.bcc.map((email) => email.email))
                     : undefined;
                 // Use provided from address or default
                 const fromAddress = ctx.body.from || options?.fromAddress;
@@ -514,7 +532,7 @@ export const email = (options) => {
                 // Prepare email request
                 const emailRequest = {
                     to: ctx.body.to,
-                    from: fromAddress,
+                    from: { email: fromAddress },
                     subject: ctx.body.subject,
                     html: ctx.body.html,
                     text: ctx.body.text,
@@ -531,7 +549,7 @@ export const email = (options) => {
                     toAddress: arrayToString(toEmails) || toEmails[0],
                     ccAddress: arrayToString(ccEmails),
                     bccAddress: arrayToString(bccEmails),
-                    replyToAddress: ctx.body.replyTo || options?.replyToAddress,
+                    replyToAddress: ctx.body.replyTo.email || options?.replyToAddress,
                     subject: ctx.body.subject,
                     content: sanitizeEmailContent(ctx.body.html || ctx.body.text || ""),
                     contentType,
@@ -545,7 +563,7 @@ export const email = (options) => {
                         : undefined,
                 };
                 // Send email
-                const sendResult = await adapter.sendEmail(emailRequest);
+                const sendResult = await adapter.adapter.sendEmail(emailRequest);
                 // Update email log data based on send result
                 if (sendResult.success) {
                     // Success: save provider ID (message ID) and mark as sent

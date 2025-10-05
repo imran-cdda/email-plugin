@@ -31,14 +31,29 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
         sendEmail: {
             <AsResponse extends boolean = false, ReturnHeaders extends boolean = false>(inputCtx_0: {
                 body: {
-                    to: string | string[];
+                    to: {
+                        email: string;
+                        name?: string | undefined;
+                    }[];
+                    from: {
+                        email: string;
+                        name?: string | undefined;
+                    };
                     subject: string;
-                    from?: string | undefined;
+                    replyTo: {
+                        email: string;
+                        name?: string | undefined;
+                    };
                     html?: string | undefined;
                     text?: string | undefined;
-                    cc?: string | string[] | undefined;
-                    bcc?: string | string[] | undefined;
-                    replyTo?: string | undefined;
+                    cc?: {
+                        email: string;
+                        name?: string | undefined;
+                    }[] | undefined;
+                    bcc?: {
+                        email: string;
+                        name?: string | undefined;
+                    }[] | undefined;
                     tags?: {
                         name: string;
                         value: string;
@@ -46,6 +61,7 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                     attachments?: {
                         filename: string;
                         content: string | Buffer<ArrayBufferLike>;
+                        url?: string | undefined;
                         contentType?: string | undefined;
                     }[] | undefined;
                     provider?: "resend" | "sendgrid" | "bravo" | undefined;
@@ -85,19 +101,35 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
             options: {
                 method: "POST";
                 body: z.ZodObject<{
-                    to: z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>;
-                    from: z.ZodOptional<z.ZodString>;
+                    to: z.ZodArray<z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>>;
+                    from: z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>;
                     subject: z.ZodString;
                     html: z.ZodOptional<z.ZodString>;
                     text: z.ZodOptional<z.ZodString>;
-                    cc: z.ZodOptional<z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
-                    bcc: z.ZodOptional<z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
-                    replyTo: z.ZodOptional<z.ZodString>;
+                    cc: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>>>;
+                    bcc: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>>>;
+                    replyTo: z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>;
                     tags: z.ZodOptional<z.ZodArray<z.ZodObject<{
                         name: z.ZodString;
                         value: z.ZodString;
                     }, z.core.$strip>>>;
                     attachments: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        url: z.ZodOptional<z.ZodString>;
                         filename: z.ZodString;
                         content: z.ZodUnion<readonly [z.ZodString, z.ZodCustom<Buffer<ArrayBufferLike>, Buffer<ArrayBufferLike>>]>;
                         contentType: z.ZodOptional<z.ZodString>;
@@ -155,12 +187,21 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                     emails: {
                         to: string | string[];
                         subject: string;
+                        replyTo: {
+                            email: string;
+                            name?: string | undefined;
+                        };
                         from?: string | undefined;
                         html?: string | undefined;
                         text?: string | undefined;
-                        cc?: string | string[] | undefined;
-                        bcc?: string | string[] | undefined;
-                        replyTo?: string | undefined;
+                        cc?: {
+                            email: string;
+                            name?: string | undefined;
+                        }[] | undefined;
+                        bcc?: {
+                            email: string;
+                            name?: string | undefined;
+                        }[] | undefined;
                         tags?: {
                             name: string;
                             value: string;
@@ -215,9 +256,18 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                         subject: z.ZodString;
                         html: z.ZodOptional<z.ZodString>;
                         text: z.ZodOptional<z.ZodString>;
-                        cc: z.ZodOptional<z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
-                        bcc: z.ZodOptional<z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
-                        replyTo: z.ZodOptional<z.ZodString>;
+                        cc: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                            email: z.ZodEmail;
+                            name: z.ZodOptional<z.ZodString>;
+                        }, z.core.$strip>>>;
+                        bcc: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                            email: z.ZodEmail;
+                            name: z.ZodOptional<z.ZodString>;
+                        }, z.core.$strip>>>;
+                        replyTo: z.ZodObject<{
+                            email: z.ZodEmail;
+                            name: z.ZodOptional<z.ZodString>;
+                        }, z.core.$strip>;
                         tags: z.ZodOptional<z.ZodArray<z.ZodObject<{
                             name: z.ZodString;
                             value: z.ZodString;
@@ -477,14 +527,26 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
         sendSystemEmail: {
             <AsResponse extends boolean = false, ReturnHeaders extends boolean = false>(inputCtx_0: {
                 body: {
-                    to: string | string[];
+                    to: {
+                        email: string;
+                        name?: string | undefined;
+                    }[];
                     subject: string;
+                    replyTo: {
+                        email: string;
+                        name?: string | undefined;
+                    };
                     from?: string | undefined;
                     html?: string | undefined;
                     text?: string | undefined;
-                    cc?: string | string[] | undefined;
-                    bcc?: string | string[] | undefined;
-                    replyTo?: string | undefined;
+                    cc?: {
+                        email: string;
+                        name?: string | undefined;
+                    }[] | undefined;
+                    bcc?: {
+                        email: string;
+                        name?: string | undefined;
+                    }[] | undefined;
                     tags?: {
                         name: string;
                         value: string;
@@ -527,14 +589,26 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
             options: {
                 method: "POST";
                 body: z.ZodObject<{
-                    to: z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>;
+                    to: z.ZodArray<z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>>;
                     from: z.ZodOptional<z.ZodString>;
                     subject: z.ZodString;
                     html: z.ZodOptional<z.ZodString>;
                     text: z.ZodOptional<z.ZodString>;
-                    cc: z.ZodOptional<z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
-                    bcc: z.ZodOptional<z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
-                    replyTo: z.ZodOptional<z.ZodString>;
+                    cc: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>>>;
+                    bcc: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>>>;
+                    replyTo: z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>;
                     tags: z.ZodOptional<z.ZodArray<z.ZodObject<{
                         name: z.ZodString;
                         value: z.ZodString;

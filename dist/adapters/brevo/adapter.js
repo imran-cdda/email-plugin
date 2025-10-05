@@ -1,16 +1,17 @@
 import { TransactionalEmailsApi, TransactionalEmailsApiApiKeys, } from "@getbrevo/brevo";
+import { baseAdapter } from "../base";
 /**
  * Comprehensive Brevo Email Sender with full type safety
  * Supports all Brevo transactional email features
  */
-export class BrevoEmailAdapter {
+export class BrevoEmailAdapter extends baseAdapter {
     /**
      * Initialize Brevo Email Sender
      * @param apiKey - Your Brevo API key
      * @param defaultSender - Optional default sender for all emails
      */
     constructor(defaultSender) {
-        this.name = "brevo";
+        super("brevo");
         this.apiKey = process.env.BREVO_API_KEY || "";
         this.baseDomain = process.env.BREVO_BASE_DOMAIN || "https://api.brevo.com/v3";
         this.api = new TransactionalEmailsApi();

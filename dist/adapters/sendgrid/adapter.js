@@ -1,17 +1,18 @@
 import sgMail from "@sendgrid/mail";
 import sgClient from "@sendgrid/client";
+import { baseAdapter } from "../base";
 /**
  * Comprehensive SendGrid Email Adapter with full type safety
  * Supports all SendGrid transactional email features
  */
-export class SendGridEmailAdapter {
+export class SendGridEmailAdapter extends baseAdapter {
     /**
      * Initialize SendGrid Email Adapter
      * @param apiKey - Your SendGrid API key (optional if set in env)
      * @param defaultSender - Optional default sender for all emails
      */
     constructor(apiKey, defaultSender) {
-        this.name = "sendgrid";
+        super("sendgrid");
         this.apiKey = apiKey || process.env.SENDGRID_API_KEY || "";
         if (!this.apiKey) {
             throw new Error("SendGrid API key is required");
