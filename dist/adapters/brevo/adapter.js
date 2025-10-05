@@ -10,6 +10,7 @@ export class BrevoEmailAdapter {
      * @param defaultSender - Optional default sender for all emails
      */
     constructor(defaultSender) {
+        this.name = "brevo";
         this.apiKey = process.env.BREVO_API_KEY || "";
         this.baseDomain = process.env.BREVO_BASE_DOMAIN || "https://api.brevo.com/v3";
         this.api = new TransactionalEmailsApi();
@@ -49,49 +50,34 @@ export class BrevoEmailAdapter {
     // ==========================================================================
     /**
      * Send a simple transactional email with HTML/text content
-     * @param config - Email configuration
+     * @param email - Email configuration
      * @returns Promise with message ID
      */
-    async sendEmail(config) {
+    async sendEmail(email) {
         const emailData = {
-            sender: config.sender || this.defaultSender,
-            to: config.to,
-            cc: config.cc,
-            bcc: config.bcc,
-            subject: config.subject,
-            htmlContent: config.htmlContent,
-            textContent: config.textContent,
-            replyTo: config.replyTo,
-            attachment: config.attachment,
-            headers: config.headers,
-            tags: config.tags,
-            params: config.params,
+            sender: {
+                email: email.from.email,
+                name: email.from.name,
+            },
+            to: email.to,
+            cc: email.cc,
+            bcc: email.bcc,
+            subject: email.subject,
+            htmlContent: email.html,
+            textContent: email.text,
+            replyTo: email.replyTo,
+            attachment: email?.attachments?.map((att) => ({
+                name: att.filename,
+                content: att.content,
+            })),
+            tags: email?.tags?.map((tag) => tag.name),
         };
         this.validateEmailData(emailData);
         const response = await this.api.sendTransacEmail(emailData);
         return {
-            messageId: response.body.messageId,
+            success: true,
+            id: response.body.messageId,
         };
-    }
-    /**
-     * Send a quick email with minimal configuration
-     * @param to - Recipient email address
-     * @param subject - Email subject
-     * @param htmlContent - HTML content
-     * @param textContent - Optional plain text content
-     * @returns Promise with message ID
-     */
-    async sendQuickEmail(to, subject, htmlContent, textContent) {
-        if (!this.defaultSender) {
-            throw new Error("Default sender must be configured to use sendQuickEmail");
-        }
-        return this.sendEmail({
-            sender: this.defaultSender,
-            to: [{ email: to }],
-            subject,
-            htmlContent,
-            textContent,
-        });
     }
     // ==========================================================================
     // BATCH EMAIL SENDING
@@ -101,27 +87,29 @@ export class BrevoEmailAdapter {
      * @param config - Batch email configuration
      * @returns Promise with array of message IDs
      */
-    async sendBatchEmails(config) {
-        if (config.messageVersions.length > 1000) {
-            throw new Error("Maximum 1000 message versions allowed per batch");
+    async sendBulkEmails(emails) {
+        const results = [];
+        // Process emails in batches to avoid rate limits
+        const batchSize = 10;
+        for (let i = 0; i < emails.length; i += batchSize) {
+            const batch = emails.slice(i, i + batchSize);
+            const batchPromises = batch.map((email) => this.sendEmail(email));
+            const batchResults = await Promise.allSettled(batchPromises);
+            for (const result of batchResults) {
+                if (result.status === "fulfilled") {
+                    results.push(result.value);
+                }
+                else {
+                    results.push({
+                        success: false,
+                        error: result.reason instanceof Error
+                            ? result.reason.message
+                            : "Unknown error",
+                    });
+                }
+            }
         }
-        const emailData = {
-            sender: config.sender || this.defaultSender,
-            subject: config.subject,
-            htmlContent: config.htmlContent,
-            textContent: config.textContent,
-            templateId: config.templateId,
-            params: config.params,
-            batchId: config.batchId,
-            replyTo: config.replyTo,
-            headers: config.headers,
-            tags: config.tags,
-        };
-        this.validateEmailData(emailData);
-        const response = await this.api.sendTransacEmail(emailData);
-        return {
-            messageIds: response.body.messageIds,
-        };
+        return results;
     }
     // ==========================================================================
     // SCHEDULED EMAIL SENDING

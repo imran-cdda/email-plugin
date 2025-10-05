@@ -1,9 +1,11 @@
-import { SimpleEmailConfig, BatchEmailConfig, ScheduledEmailConfig, ScheduledBatchEmailConfig, EmailSendResponse, EmailContact, EmailAttachment, EmailStatisticsOptions, EmailStatistics, CancelScheduledEmailResponse, SuppressionGroup, BlockedEmail, BouncedEmail, SpamReport, InvalidEmail } from "./types";
+import { ScheduledEmailConfig, ScheduledBatchEmailConfig, EmailSendResponse, EmailContact, EmailAttachment, EmailStatisticsOptions, EmailStatistics, CancelScheduledEmailResponse, SuppressionGroup, BlockedEmail, BouncedEmail, SpamReport, InvalidEmail } from "./types";
+import { EmailAdapter, EmailProvider, SendEmailRequest, SendEmailResponse } from "../types";
 /**
  * Comprehensive SendGrid Email Adapter with full type safety
  * Supports all SendGrid transactional email features
  */
-export declare class SendGridEmailAdapter {
+export declare class SendGridEmailAdapter implements EmailAdapter {
+    name: EmailProvider;
     private mailService;
     private defaultSender?;
     private apiKey;
@@ -18,39 +20,8 @@ export declare class SendGridEmailAdapter {
      * @param config - Email configuration
      * @returns Promise with response details
      */
-    sendEmail(config: SimpleEmailConfig): Promise<EmailSendResponse>;
-    /**
-     * Send a quick email with minimal configuration
-     * @param to - Recipient email address
-     * @param subject - Email subject
-     * @param htmlContent - HTML content
-     * @param textContent - Optional plain text content
-     * @returns Promise with response details
-     */
-    sendQuickEmail(to: string, subject: string, htmlContent: string, textContent?: string): Promise<EmailSendResponse>;
-    /**
-     * Send email using a dynamic template
-     * @param to - Recipient(s)
-     * @param templateId - SendGrid template ID
-     * @param dynamicTemplateData - Template variables
-     * @param sender - Optional sender (uses default if not provided)
-     * @returns Promise with response details
-     */
-    sendTemplateEmail(to: EmailContact[], templateId: string, dynamicTemplateData: {
-        [key: string]: any;
-    }, sender?: EmailContact): Promise<EmailSendResponse>;
-    /**
-     * Send batch emails with multiple personalizations
-     * @param config - Batch email configuration
-     * @returns Promise with response details
-     */
-    sendBatchEmails(config: BatchEmailConfig): Promise<EmailSendResponse>;
-    /**
-     * Send multiple individual emails
-     * @param emails - Array of email configurations
-     * @returns Promise with array of responses
-     */
-    sendMultipleEmails(emails: SimpleEmailConfig[]): Promise<EmailSendResponse[]>;
+    sendEmail(email: SendEmailRequest): Promise<SendEmailResponse>;
+    sendBulkEmails(emails: SendEmailRequest[]): Promise<SendEmailResponse[]>;
     /**
      * Schedule an email to be sent at a specific time
      * @param config - Scheduled email configuration

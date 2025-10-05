@@ -11,6 +11,7 @@ export class SendGridEmailAdapter {
      * @param defaultSender - Optional default sender for all emails
      */
     constructor(apiKey, defaultSender) {
+        this.name = "sendgrid";
         this.apiKey = apiKey || process.env.SENDGRID_API_KEY || "";
         if (!this.apiKey) {
             throw new Error("SendGrid API key is required");
@@ -28,160 +29,59 @@ export class SendGridEmailAdapter {
      * @param config - Email configuration
      * @returns Promise with response details
      */
-    async sendEmail(config) {
+    async sendEmail(email) {
         const emailData = {
-            from: config.sender || this.defaultSender,
-            to: config.to,
-            cc: config.cc,
-            bcc: config.bcc,
-            subject: config.subject,
+            from: email.from || this.defaultSender,
+            to: email.to,
+            cc: email.cc,
+            bcc: email.bcc,
+            subject: email.subject,
             content: [
                 {
                     type: "text/html",
-                    value: config.htmlContent || "",
+                    value: email.html || "",
                 },
             ],
-            attachments: config.attachments?.map((a) => ({
-                ...a,
-                content: a.content ?? "",
+            attachments: email.attachments?.map((a) => ({
+                content: a.content,
+                filename: a.filename,
+                type: a.contentType,
             })),
-            headers: config.headers,
-            categories: config.categories,
-            customArgs: config.customArgs,
-            sendAt: config.sendAt,
-            batchId: config.batchId,
-            asm: config.asm,
-            ipPoolName: config.ipPoolName,
+            categories: email.tags?.map((tag) => tag.name),
         };
         this.validateEmailData(emailData);
         const [response] = await this.mailService.send(emailData);
         return {
-            statusCode: response.statusCode,
-            headers: response.headers,
-            body: response.body,
-        };
-    }
-    /**
-     * Send a quick email with minimal configuration
-     * @param to - Recipient email address
-     * @param subject - Email subject
-     * @param htmlContent - HTML content
-     * @param textContent - Optional plain text content
-     * @returns Promise with response details
-     */
-    async sendQuickEmail(to, subject, htmlContent, textContent) {
-        if (!this.defaultSender) {
-            throw new Error("Default sender must be configured to use sendQuickEmail");
-        }
-        return this.sendEmail({
-            sender: this.defaultSender,
-            to: [{ email: to }],
-            subject,
-            htmlContent,
-            textContent,
-        });
-    }
-    /**
-     * Send email using a dynamic template
-     * @param to - Recipient(s)
-     * @param templateId - SendGrid template ID
-     * @param dynamicTemplateData - Template variables
-     * @param sender - Optional sender (uses default if not provided)
-     * @returns Promise with response details
-     */
-    async sendTemplateEmail(to, templateId, dynamicTemplateData, sender) {
-        const emailData = {
-            from: sender || this.defaultSender,
-            to,
-            templateId,
-            dynamicTemplateData,
-        };
-        this.validateEmailData(emailData);
-        const [response] = await this.mailService.send(emailData);
-        return {
-            statusCode: response.statusCode,
-            headers: response.headers,
-            body: response.body,
+            success: true,
+            id: response.headers["x-sendgrid-message-id"],
         };
     }
     // ==========================================================================
     // BATCH EMAIL SENDING
     // ==========================================================================
-    /**
-     * Send batch emails with multiple personalizations
-     * @param config - Batch email configuration
-     * @returns Promise with response details
-     */
-    async sendBatchEmails(config) {
-        if (config.personalizations.length > 1000) {
-            throw new Error("Maximum 1000 personalizations allowed per batch");
+    async sendBulkEmails(emails) {
+        const results = [];
+        // Process emails in batches to avoid rate limits
+        const batchSize = 10;
+        for (let i = 0; i < emails.length; i += batchSize) {
+            const batch = emails.slice(i, i + batchSize);
+            const batchPromises = batch.map((email) => this.sendEmail(email));
+            const batchResults = await Promise.allSettled(batchPromises);
+            for (const result of batchResults) {
+                if (result.status === "fulfilled") {
+                    results.push(result.value);
+                }
+                else {
+                    results.push({
+                        success: false,
+                        error: result.reason instanceof Error
+                            ? result.reason.message
+                            : "Unknown error",
+                    });
+                }
+            }
         }
-        const emailData = {
-            from: config.sender || this.defaultSender,
-            subject: config.subject || "",
-            content: [
-                { type: "text/plain", value: config.textContent || "" },
-                { type: "text/html", value: config.htmlContent || "" },
-            ],
-            replyTo: config.replyTo,
-            attachments: config.attachments?.map((a) => ({
-                ...a,
-                content: a.content ?? "",
-            })),
-            headers: config.headers,
-            categories: config.categories,
-            customArgs: config.customArgs,
-            batchId: config.batchId,
-            asm: config.asm,
-            ipPoolName: config.ipPoolName,
-        };
-        this.validateEmailData(emailData);
-        const [response] = await this.mailService.send(emailData);
-        return {
-            statusCode: response.statusCode,
-            headers: response.headers,
-            body: response.body,
-        };
-    }
-    /**
-     * Send multiple individual emails
-     * @param emails - Array of email configurations
-     * @returns Promise with array of responses
-     */
-    async sendMultipleEmails(emails) {
-        const emailDataArray = emails.map((config) => ({
-            from: config.sender || this.defaultSender,
-            to: config.to,
-            cc: config.cc,
-            bcc: config.bcc,
-            subject: config.subject || "",
-            content: [
-                { type: "text/plain", value: config.textContent || "" },
-                { type: "text/html", value: config.htmlContent || "" },
-            ],
-            replyTo: config.replyTo,
-            attachments: config.attachments?.map((a) => ({
-                ...a,
-                content: a.content ?? "",
-            })),
-            headers: config.headers,
-            categories: config.categories,
-            customArgs: config.customArgs,
-            sendAt: config.sendAt,
-            batchId: config.batchId,
-            asm: config.asm,
-            ipPoolName: config.ipPoolName,
-        }));
-        emailDataArray.forEach((emailData) => this.validateEmailData(emailData));
-        const [clientResponse] = await this.mailService.send(emailDataArray);
-        const responses = [
-            {
-                statusCode: clientResponse.statusCode,
-                headers: clientResponse.headers,
-                body: clientResponse.body,
-            },
-        ];
-        return responses;
+        return results;
     }
     // ==========================================================================
     // SCHEDULED EMAIL SENDING

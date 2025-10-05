@@ -1,6 +1,6 @@
 import type { Session, User } from "better-auth";
 import type { z } from "zod";
-import type { bulkSendEmailSchema, sendEmailSchema, webhookEventSchema } from "./schema";
+import { bulkSendEmailSchema, sendEmailSchema, webhookEventSchema } from "./schema";
 export interface BetterAuthAdapter {
     findOne<T = DatabaseEmailLog>(options: {
         model: string;

@@ -1,6 +1,6 @@
 import type { Session, User } from "better-auth";
 import type { z } from "zod";
-import type {
+import {
   bulkSendEmailSchema,
   sendEmailSchema,
   webhookEventSchema,

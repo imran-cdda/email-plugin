@@ -353,7 +353,7 @@ export const email = (options) => {
                     "delivery_delayed",
                 ])
                     .optional(),
-                provider: z.enum(["resend", "sendgrid", "bravo"]).optional(),
+                provider: z.enum(["resend", "sendgrid", "brevo"]).optional(),
                 limit: z.string().transform(Number).optional(),
                 offset: z.string().transform(Number).optional(),
             })
