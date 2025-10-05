@@ -1,11 +1,11 @@
 import { ScheduledEmailConfig, ScheduledBatchEmailConfig, EmailSendResponse, EmailContact, EmailAttachment, EmailStatisticsOptions, EmailStatistics, CancelScheduledEmailResponse, SuppressionGroup, BlockedEmail, BouncedEmail, SpamReport, InvalidEmail } from "./types";
-import { EmailAdapter, EmailProvider, SendEmailRequest, SendEmailResponse } from "../types";
+import { SendEmailRequest, SendEmailResponse } from "../types";
+import { baseAdapter } from "../base";
 /**
  * Comprehensive SendGrid Email Adapter with full type safety
  * Supports all SendGrid transactional email features
  */
-export declare class SendGridEmailAdapter implements EmailAdapter {
-    name: EmailProvider;
+export declare class SendGridEmailAdapter extends baseAdapter {
     private mailService;
     private defaultSender?;
     private apiKey;

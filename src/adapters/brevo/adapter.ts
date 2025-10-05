@@ -23,13 +23,13 @@ import {
   SendEmailRequest,
   SendEmailResponse,
 } from "../types";
+import { baseAdapter } from "../base";
 
 /**
  * Comprehensive Brevo Email Sender with full type safety
  * Supports all Brevo transactional email features
  */
-export class BrevoEmailAdapter implements EmailAdapter {
-  name: EmailProvider = "brevo";
+export class BrevoEmailAdapter extends baseAdapter {
   private api: TransactionalEmailsApi;
   private defaultSender?: EmailContact;
   private apiKey: string = process.env.BREVO_API_KEY || "";
@@ -42,6 +42,7 @@ export class BrevoEmailAdapter implements EmailAdapter {
    * @param defaultSender - Optional default sender for all emails
    */
   constructor(defaultSender?: EmailContact) {
+    super("brevo");
     this.api = new TransactionalEmailsApi();
     this.api.setApiKey(TransactionalEmailsApiApiKeys.apiKey, this.apiKey);
     this.defaultSender = defaultSender;

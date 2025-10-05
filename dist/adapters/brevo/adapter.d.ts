@@ -1,11 +1,11 @@
 import { AddDomainResponse, deleteDomainResponse, DomainResponse, EmailAttachment, EmailContact, EmailSendResponse, EmailStatisticsOptions, EmailStatusResponse, ScheduledBatchEmailConfig, ScheduledEmailConfig } from "./types";
-import { EmailAdapter, EmailProvider, SendEmailRequest, SendEmailResponse } from "../types";
+import { SendEmailRequest, SendEmailResponse } from "../types";
+import { baseAdapter } from "../base";
 /**
  * Comprehensive Brevo Email Sender with full type safety
  * Supports all Brevo transactional email features
  */
-export declare class BrevoEmailAdapter implements EmailAdapter {
-    name: EmailProvider;
+export declare class BrevoEmailAdapter extends baseAdapter {
     private api;
     private defaultSender?;
     private apiKey;
