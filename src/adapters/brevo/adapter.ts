@@ -17,12 +17,19 @@ import {
   ScheduledEmailConfig,
   SimpleEmailConfig,
 } from "./types";
+import {
+  EmailAdapter,
+  EmailProvider,
+  SendEmailRequest,
+  SendEmailResponse,
+} from "../types";
 
 /**
  * Comprehensive Brevo Email Sender with full type safety
  * Supports all Brevo transactional email features
  */
-export class BrevoEmailAdapter {
+export class BrevoEmailAdapter implements EmailAdapter {
+  name: EmailProvider = "brevo";
   private api: TransactionalEmailsApi;
   private defaultSender?: EmailContact;
   private apiKey: string = process.env.BREVO_API_KEY || "";
@@ -74,60 +81,36 @@ export class BrevoEmailAdapter {
 
   /**
    * Send a simple transactional email with HTML/text content
-   * @param config - Email configuration
+   * @param email - Email configuration
    * @returns Promise with message ID
    */
-  async sendEmail(config: SimpleEmailConfig): Promise<EmailSendResponse> {
+  async sendEmail(email: SendEmailRequest): Promise<SendEmailResponse> {
     const emailData: SendSmtpEmail = {
-      sender: config.sender || this.defaultSender,
-      to: config.to,
-      cc: config.cc,
-      bcc: config.bcc,
-      subject: config.subject,
-      htmlContent: config.htmlContent,
-      textContent: config.textContent,
-      replyTo: config.replyTo,
-      attachment: config.attachment,
-      headers: config.headers,
-      tags: config.tags,
-      params: config.params,
+      sender: {
+        email: email.from.email,
+        name: email.from.name,
+      } as EmailContact,
+      to: email.to as EmailContact[],
+      cc: email.cc as EmailContact[],
+      bcc: email.bcc as EmailContact[],
+      subject: email.subject,
+      htmlContent: email.html,
+      textContent: email.text,
+      replyTo: email.replyTo as EmailContact,
+      attachment: email?.attachments?.map((att) => ({
+        name: att.filename,
+        content: att.content,
+      })) as EmailAttachment[],
+      tags: email?.tags?.map((tag) => tag.name) as string[],
     };
 
     this.validateEmailData(emailData);
 
     const response = await this.api.sendTransacEmail(emailData);
     return {
-      messageId: response.body.messageId,
+      success: true,
+      id: response.body.messageId,
     };
-  }
-
-  /**
-   * Send a quick email with minimal configuration
-   * @param to - Recipient email address
-   * @param subject - Email subject
-   * @param htmlContent - HTML content
-   * @param textContent - Optional plain text content
-   * @returns Promise with message ID
-   */
-  async sendQuickEmail(
-    to: string,
-    subject: string,
-    htmlContent: string,
-    textContent?: string
-  ): Promise<EmailSendResponse> {
-    if (!this.defaultSender) {
-      throw new Error(
-        "Default sender must be configured to use sendQuickEmail"
-      );
-    }
-
-    return this.sendEmail({
-      sender: this.defaultSender,
-      to: [{ email: to }],
-      subject,
-      htmlContent,
-      textContent,
-    });
   }
 
   // ==========================================================================
@@ -139,30 +122,34 @@ export class BrevoEmailAdapter {
    * @param config - Batch email configuration
    * @returns Promise with array of message IDs
    */
-  async sendBatchEmails(config: BatchEmailConfig): Promise<EmailSendResponse> {
-    if (config.messageVersions.length > 1000) {
-      throw new Error("Maximum 1000 message versions allowed per batch");
+  async sendBulkEmails(
+    emails: SendEmailRequest[]
+  ): Promise<SendEmailResponse[]> {
+    const results: SendEmailResponse[] = [];
+
+    // Process emails in batches to avoid rate limits
+    const batchSize = 10;
+    for (let i = 0; i < emails.length; i += batchSize) {
+      const batch = emails.slice(i, i + batchSize);
+      const batchPromises = batch.map((email) => this.sendEmail(email));
+      const batchResults = await Promise.allSettled(batchPromises);
+
+      for (const result of batchResults) {
+        if (result.status === "fulfilled") {
+          results.push(result.value);
+        } else {
+          results.push({
+            success: false,
+            error:
+              result.reason instanceof Error
+                ? result.reason.message
+                : "Unknown error",
+          });
+        }
+      }
     }
 
-    const emailData: SendSmtpEmail = {
-      sender: config.sender || this.defaultSender,
-      subject: config.subject,
-      htmlContent: config.htmlContent,
-      textContent: config.textContent,
-      templateId: config.templateId,
-      params: config.params,
-      batchId: config.batchId,
-      replyTo: config.replyTo,
-      headers: config.headers,
-      tags: config.tags,
-    };
-
-    this.validateEmailData(emailData);
-
-    const response = await this.api.sendTransacEmail(emailData);
-    return {
-      messageIds: response.body.messageIds,
-    };
+    return results;
   }
 
   // ==========================================================================

@@ -22,12 +22,19 @@ import {
   InvalidEmail,
   Template,
 } from "./types";
+import {
+  EmailAdapter,
+  EmailProvider,
+  SendEmailRequest,
+  SendEmailResponse,
+} from "../types";
 
 /**
  * Comprehensive SendGrid Email Adapter with full type safety
  * Supports all SendGrid transactional email features
  */
-export class SendGridEmailAdapter {
+export class SendGridEmailAdapter implements EmailAdapter {
+  name: EmailProvider = "sendgrid";
   private mailService: MailService;
   private defaultSender?: EmailContact;
   private apiKey: string;
@@ -61,30 +68,25 @@ export class SendGridEmailAdapter {
    * @param config - Email configuration
    * @returns Promise with response details
    */
-  async sendEmail(config: SimpleEmailConfig): Promise<EmailSendResponse> {
+  async sendEmail(email: SendEmailRequest): Promise<SendEmailResponse> {
     const emailData: MailDataRequired = {
-      from: config.sender || this.defaultSender!,
-      to: config.to,
-      cc: config.cc,
-      bcc: config.bcc,
-      subject: config.subject,
+      from: email.from || this.defaultSender!,
+      to: email.to,
+      cc: email.cc,
+      bcc: email.bcc,
+      subject: email.subject,
       content: [
         {
           type: "text/html",
-          value: config.htmlContent || "",
+          value: email.html || "",
         },
       ],
-      attachments: config.attachments?.map((a) => ({
-        ...a,
-        content: a.content ?? "",
-      })),
-      headers: config.headers,
-      categories: config.categories,
-      customArgs: config.customArgs,
-      sendAt: config.sendAt,
-      batchId: config.batchId,
-      asm: config.asm,
-      ipPoolName: config.ipPoolName,
+      attachments: email.attachments?.map((a) => ({
+        content: a.content,
+        filename: a.filename,
+        type: a.contentType,
+      })) as EmailAttachment[],
+      categories: email.tags?.map((tag) => tag.name) as string[],
     };
 
     this.validateEmailData(emailData);
@@ -92,70 +94,8 @@ export class SendGridEmailAdapter {
     const [response] = await this.mailService.send(emailData);
 
     return {
-      statusCode: response.statusCode,
-      headers: response.headers,
-      body: response.body,
-    };
-  }
-
-  /**
-   * Send a quick email with minimal configuration
-   * @param to - Recipient email address
-   * @param subject - Email subject
-   * @param htmlContent - HTML content
-   * @param textContent - Optional plain text content
-   * @returns Promise with response details
-   */
-  async sendQuickEmail(
-    to: string,
-    subject: string,
-    htmlContent: string,
-    textContent?: string
-  ): Promise<EmailSendResponse> {
-    if (!this.defaultSender) {
-      throw new Error(
-        "Default sender must be configured to use sendQuickEmail"
-      );
-    }
-
-    return this.sendEmail({
-      sender: this.defaultSender,
-      to: [{ email: to }],
-      subject,
-      htmlContent,
-      textContent,
-    });
-  }
-
-  /**
-   * Send email using a dynamic template
-   * @param to - Recipient(s)
-   * @param templateId - SendGrid template ID
-   * @param dynamicTemplateData - Template variables
-   * @param sender - Optional sender (uses default if not provided)
-   * @returns Promise with response details
-   */
-  async sendTemplateEmail(
-    to: EmailContact[],
-    templateId: string,
-    dynamicTemplateData: { [key: string]: any },
-    sender?: EmailContact
-  ): Promise<EmailSendResponse> {
-    const emailData: MailDataRequired = {
-      from: sender || this.defaultSender!,
-      to,
-      templateId,
-      dynamicTemplateData,
-    };
-
-    this.validateEmailData(emailData);
-
-    const [response] = await this.mailService.send(emailData);
-
-    return {
-      statusCode: response.statusCode,
-      headers: response.headers,
-      body: response.body,
+      success: true,
+      id: response.headers["x-sendgrid-message-id"],
     };
   }
 
@@ -163,92 +103,34 @@ export class SendGridEmailAdapter {
   // BATCH EMAIL SENDING
   // ==========================================================================
 
-  /**
-   * Send batch emails with multiple personalizations
-   * @param config - Batch email configuration
-   * @returns Promise with response details
-   */
-  async sendBatchEmails(config: BatchEmailConfig): Promise<EmailSendResponse> {
-    if (config.personalizations.length > 1000) {
-      throw new Error("Maximum 1000 personalizations allowed per batch");
+  async sendBulkEmails(
+    emails: SendEmailRequest[]
+  ): Promise<SendEmailResponse[]> {
+    const results: SendEmailResponse[] = [];
+
+    // Process emails in batches to avoid rate limits
+    const batchSize = 10;
+    for (let i = 0; i < emails.length; i += batchSize) {
+      const batch = emails.slice(i, i + batchSize);
+      const batchPromises = batch.map((email) => this.sendEmail(email));
+      const batchResults = await Promise.allSettled(batchPromises);
+
+      for (const result of batchResults) {
+        if (result.status === "fulfilled") {
+          results.push(result.value);
+        } else {
+          results.push({
+            success: false,
+            error:
+              result.reason instanceof Error
+                ? result.reason.message
+                : "Unknown error",
+          });
+        }
+      }
     }
 
-    const emailData: MailDataRequired = {
-      from: config.sender || this.defaultSender!,
-      subject: config.subject || "",
-      content: [
-        { type: "text/plain", value: config.textContent || "" },
-        { type: "text/html", value: config.htmlContent || "" },
-      ],
-      replyTo: config.replyTo,
-      attachments: config.attachments?.map((a) => ({
-        ...a,
-        content: a.content ?? "",
-      })),
-      headers: config.headers,
-      categories: config.categories,
-      customArgs: config.customArgs,
-      batchId: config.batchId,
-      asm: config.asm,
-      ipPoolName: config.ipPoolName,
-    };
-
-    this.validateEmailData(emailData);
-
-    const [response] = await this.mailService.send(emailData);
-
-    return {
-      statusCode: response.statusCode,
-      headers: response.headers,
-      body: response.body,
-    };
-  }
-
-  /**
-   * Send multiple individual emails
-   * @param emails - Array of email configurations
-   * @returns Promise with array of responses
-   */
-  async sendMultipleEmails(
-    emails: SimpleEmailConfig[]
-  ): Promise<EmailSendResponse[]> {
-    const emailDataArray: MailDataRequired[] = emails.map((config) => ({
-      from: config.sender || this.defaultSender!,
-      to: config.to,
-      cc: config.cc,
-      bcc: config.bcc,
-      subject: config.subject || "",
-      content: [
-        { type: "text/plain", value: config.textContent || "" },
-        { type: "text/html", value: config.htmlContent || "" },
-      ],
-      replyTo: config.replyTo,
-      attachments: config.attachments?.map((a) => ({
-        ...a,
-        content: a.content ?? "",
-      })),
-      headers: config.headers,
-      categories: config.categories,
-      customArgs: config.customArgs,
-      sendAt: config.sendAt,
-      batchId: config.batchId,
-      asm: config.asm,
-      ipPoolName: config.ipPoolName,
-    }));
-
-    emailDataArray.forEach((emailData) => this.validateEmailData(emailData));
-
-    const [clientResponse] = await this.mailService.send(emailDataArray);
-
-    const responses: EmailSendResponse[] = [
-      {
-        statusCode: clientResponse.statusCode,
-        headers: clientResponse.headers,
-        body: clientResponse.body,
-      },
-    ];
-
-    return responses;
+    return results;
   }
 
   // ==========================================================================

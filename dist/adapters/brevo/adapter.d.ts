@@ -1,9 +1,11 @@
-import { AddDomainResponse, BatchEmailConfig, deleteDomainResponse, DomainResponse, EmailAttachment, EmailContact, EmailSendResponse, EmailStatisticsOptions, EmailStatusResponse, ScheduledBatchEmailConfig, ScheduledEmailConfig, SimpleEmailConfig } from "./types";
+import { AddDomainResponse, deleteDomainResponse, DomainResponse, EmailAttachment, EmailContact, EmailSendResponse, EmailStatisticsOptions, EmailStatusResponse, ScheduledBatchEmailConfig, ScheduledEmailConfig } from "./types";
+import { EmailAdapter, EmailProvider, SendEmailRequest, SendEmailResponse } from "../types";
 /**
  * Comprehensive Brevo Email Sender with full type safety
  * Supports all Brevo transactional email features
  */
-export declare class BrevoEmailAdapter {
+export declare class BrevoEmailAdapter implements EmailAdapter {
+    name: EmailProvider;
     private api;
     private defaultSender?;
     private apiKey;
@@ -17,25 +19,16 @@ export declare class BrevoEmailAdapter {
     private executeRequest;
     /**
      * Send a simple transactional email with HTML/text content
-     * @param config - Email configuration
+     * @param email - Email configuration
      * @returns Promise with message ID
      */
-    sendEmail(config: SimpleEmailConfig): Promise<EmailSendResponse>;
-    /**
-     * Send a quick email with minimal configuration
-     * @param to - Recipient email address
-     * @param subject - Email subject
-     * @param htmlContent - HTML content
-     * @param textContent - Optional plain text content
-     * @returns Promise with message ID
-     */
-    sendQuickEmail(to: string, subject: string, htmlContent: string, textContent?: string): Promise<EmailSendResponse>;
+    sendEmail(email: SendEmailRequest): Promise<SendEmailResponse>;
     /**
      * Send batch emails with multiple versions (up to 1000 versions per call)
      * @param config - Batch email configuration
      * @returns Promise with array of message IDs
      */
-    sendBatchEmails(config: BatchEmailConfig): Promise<EmailSendResponse>;
+    sendBulkEmails(emails: SendEmailRequest[]): Promise<SendEmailResponse[]>;
     /**
      * Schedule an email to be sent at a specific time
      * @param config - Scheduled email configuration

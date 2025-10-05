@@ -1,11 +1,18 @@
 import { CreateEmailOptions, Resend } from "resend";
-import { EmailAttachment, SendEmailRequest, SendEmailResponse } from "./types";
+import {
+  EmailAdapter,
+  EmailAttachment,
+  EmailProvider,
+  SendEmailRequest,
+  SendEmailResponse,
+} from "./types";
 
 /**
  * Resend email adapter implementation
  */
-export class ResendEmailAdapter {
+export class ResendEmailAdapter implements EmailAdapter {
   private apiKey: string = process.env.RESEND_API_KEY || "";
+  name: EmailProvider = "resend";
   private resend;
 
   constructor() {
@@ -34,6 +41,7 @@ export class ResendEmailAdapter {
               attachments: email.attachments.map((att: EmailAttachment) => ({
                 filename: att.filename,
                 content: att.content,
+                react: false,
                 ...(att.contentType ? { content_type: att.contentType } : {}),
               })),
             }
@@ -41,7 +49,7 @@ export class ResendEmailAdapter {
       };
 
       const response = await this.resend.emails.send(
-        emailData as CreateEmailOptions
+        emailData as unknown as CreateEmailOptions
       );
 
       if (response.error) {
@@ -65,7 +73,7 @@ export class ResendEmailAdapter {
     }
   }
 
-  async sendBatchEmails(
+  async sendBulkEmails(
     emails: SendEmailRequest[]
   ): Promise<SendEmailResponse[]> {
     const results: SendEmailResponse[] = [];

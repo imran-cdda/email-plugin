@@ -1,11 +1,12 @@
-import { SendEmailRequest, SendEmailResponse } from "./types";
+import { EmailAdapter, EmailProvider, SendEmailRequest, SendEmailResponse } from "./types";
 /**
  * Resend email adapter implementation
  */
-export declare class ResendEmailAdapter {
+export declare class ResendEmailAdapter implements EmailAdapter {
     private apiKey;
+    name: EmailProvider;
     private resend;
     constructor();
     sendEmail(email: SendEmailRequest): Promise<SendEmailResponse>;
-    sendBatchEmails(emails: SendEmailRequest[]): Promise<SendEmailResponse[]>;
+    sendBulkEmails(emails: SendEmailRequest[]): Promise<SendEmailResponse[]>;
 }

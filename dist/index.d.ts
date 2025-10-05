@@ -279,7 +279,7 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                 query?: {
                     userId?: string | undefined;
                     status?: "pending" | "sent" | "delivered" | "opened" | "clicked" | "bounced" | "complained" | "failed" | "delivery_delayed" | undefined;
-                    provider?: "resend" | "sendgrid" | "bravo" | undefined;
+                    provider?: "resend" | "sendgrid" | "brevo" | undefined;
                     limit?: string | undefined;
                     offset?: string | undefined;
                 } | undefined;
@@ -329,7 +329,7 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                     provider: z.ZodOptional<z.ZodEnum<{
                         resend: "resend";
                         sendgrid: "sendgrid";
-                        bravo: "bravo";
+                        brevo: "brevo";
                     }>>;
                     limit: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<number, string>>>;
                     offset: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<number, string>>>;

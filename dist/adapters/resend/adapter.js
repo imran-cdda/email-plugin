@@ -5,6 +5,7 @@ import { Resend } from "resend";
 export class ResendEmailAdapter {
     constructor() {
         this.apiKey = process.env.RESEND_API_KEY || "";
+        this.name = "resend";
         this.resend = new Resend(this.apiKey);
     }
     async sendEmail(email) {
@@ -29,6 +30,7 @@ export class ResendEmailAdapter {
                         attachments: email.attachments.map((att) => ({
                             filename: att.filename,
                             content: att.content,
+                            react: false,
                             ...(att.contentType ? { content_type: att.contentType } : {}),
                         })),
                     }
@@ -54,7 +56,7 @@ export class ResendEmailAdapter {
             };
         }
     }
-    async sendBatchEmails(emails) {
+    async sendBulkEmails(emails) {
         const results = [];
         // Process emails in batches to avoid rate limits
         const batchSize = 10;
