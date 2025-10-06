@@ -1104,6 +1104,8 @@ export class EmailService {
         body: JSON.stringify(emailData),
       });
 
+      console.log("Email response --------------------> ", response);
+
       if (!response.ok) {
         const errorData = await response
           .json()
@@ -1119,7 +1121,7 @@ export class EmailService {
 
       return await response.json();
     } catch (error) {
-      console.error("Failed to send system email:", error);
+      console.error("Failed to send email:", error);
       throw error;
     }
   }
