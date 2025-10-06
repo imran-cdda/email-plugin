@@ -782,6 +782,7 @@ export class EmailService {
         }
     }
     async sendEmail(emailData) {
+        console.log("Sending email to <--------------------> ", JSON.stringify(emailData, null, 2));
         try {
             const response = await fetch(`${this.baseUrl}/api/auth/email/send`, {
                 method: "POST",
@@ -809,6 +810,7 @@ export class EmailService {
     }
     // Convenience methods for auth flows
     async sendVerificationEmail(user, verificationUrl) {
+        console.log("Sending verification email to <--------------------> ", user.email);
         return this.sendEmail({
             to: [
                 {
