@@ -14,17 +14,13 @@ export class ResendEmailAdapter extends baseAdapter {
             // Build email data with required fields
             const emailData = {
                 from: email.from.email,
-                to: Array.isArray(email.to) ? email.to : [email.to],
+                to: email.to.map((t) => t.email),
                 subject: email.subject,
                 ...(email.html ? { html: email.html } : {}),
                 ...(email.text ? { text: email.text } : {}),
-                ...(email.cc
-                    ? { cc: Array.isArray(email.cc) ? email.cc : [email.cc] }
-                    : {}),
-                ...(email.bcc
-                    ? { bcc: Array.isArray(email.bcc) ? email.bcc : [email.bcc] }
-                    : {}),
-                ...(email.replyTo ? { replyTo: email.replyTo } : {}),
+                ...(email.cc ? { cc: email.cc.map((c) => c.email) } : {}),
+                ...(email.bcc ? { bcc: email.bcc.map((b) => b.email) } : {}),
+                ...(email.replyTo ? { replyTo: email.replyTo.email } : {}),
                 ...(email.tags ? { tags: email.tags } : {}),
                 ...(email.attachments
                     ? {
