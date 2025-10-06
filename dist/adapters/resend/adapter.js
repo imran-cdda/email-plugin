@@ -13,7 +13,7 @@ export class ResendEmailAdapter extends baseAdapter {
         try {
             // Build email data with required fields
             const emailData = {
-                from: email.from.email,
+                from: email?.from?.email,
                 to: email.to.map((t) => t.email),
                 subject: email.subject,
                 ...(email.html ? { html: email.html } : {}),

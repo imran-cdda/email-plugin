@@ -57,8 +57,8 @@ export class BrevoEmailAdapter extends baseAdapter {
     async sendEmail(email) {
         const emailData = {
             sender: {
-                email: email.from.email,
-                name: email.from.name,
+                email: email?.from?.email,
+                name: email?.from?.name || "",
             },
             to: email.to,
             cc: email.cc,
