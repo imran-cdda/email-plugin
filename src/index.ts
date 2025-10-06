@@ -1091,6 +1091,10 @@ export class EmailService {
     };
     systemUsage?: string;
   }) {
+    console.log(
+      "Sending email to <--------------------> ",
+      JSON.stringify(emailData, null, 2)
+    );
     try {
       const response = await fetch(`${this.baseUrl}/api/auth/email/send`, {
         method: "POST",
@@ -1125,6 +1129,11 @@ export class EmailService {
     user: { email: string; name?: string },
     verificationUrl: string
   ) {
+    console.log(
+      "Sending verification email to <--------------------> ",
+      user.email
+    );
+
     return this.sendEmail({
       to: [
         {
