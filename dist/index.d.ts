@@ -828,14 +828,29 @@ export declare class EmailService {
     private constructor();
     static getInstance(baseUrl?: string): EmailService;
     sendSystemEmail(emailData: {
-        to: string | string[];
-        from?: string;
+        to: {
+            email: string;
+            name?: string;
+        }[];
+        from?: {
+            email: string;
+            name?: string;
+        };
         subject: string;
         html?: string;
         text?: string;
-        cc?: string | string[];
-        bcc?: string | string[];
-        replyTo?: string;
+        cc?: {
+            email: string;
+            name?: string;
+        }[];
+        bcc?: {
+            email: string;
+            name?: string;
+        }[];
+        replyTo?: {
+            email: string;
+            name?: string;
+        };
         systemUsage?: string;
     }): Promise<any>;
     sendEmail(emailData: {

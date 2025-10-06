@@ -792,12 +792,11 @@ export class EmailService {
             return await response.json();
         }
         catch (error) {
-            console.error("Failed to send system email:", error);
+            console.error("Failed to send email:", error);
             throw error;
         }
     }
     async sendEmail(emailData) {
-        console.log("Sending email to <--------------------> ", JSON.stringify(emailData, null, 2));
         try {
             const response = await fetch(`${this.baseUrl}/api/auth/email/send`, {
                 method: "POST",
@@ -806,7 +805,6 @@ export class EmailService {
                 },
                 body: JSON.stringify(emailData),
             });
-            console.log("Email response --------------------> ", response);
             if (!response.ok) {
                 const errorData = await response
                     .json()
@@ -827,7 +825,7 @@ export class EmailService {
     // Convenience methods for auth flows
     async sendVerificationEmail(user, verificationUrl) {
         console.log("Sending verification email to <--------------------> ", user.email);
-        return this.sendEmail({
+        return this.sendSystemEmail({
             to: [
                 {
                     email: user.email,
@@ -841,7 +839,12 @@ export class EmailService {
     }
     async sendWelcomeEmail(user) {
         return this.sendSystemEmail({
-            to: user.email,
+            to: [
+                {
+                    email: user.email,
+                    name: user.name,
+                },
+            ],
             subject: "Welcome! Your account is verified",
             html: welcomeEmailTemplate(user),
             systemUsage: "welcome-email",
@@ -849,7 +852,12 @@ export class EmailService {
     }
     async sendPasswordResetEmail(user, resetUrl) {
         return this.sendSystemEmail({
-            to: user.email,
+            to: [
+                {
+                    email: user.email,
+                    name: user.name,
+                },
+            ],
             subject: "Reset your password",
             html: passwordResetEmailTemplate(user, resetUrl),
             systemUsage: "password-reset",
