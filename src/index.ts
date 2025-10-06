@@ -1051,13 +1051,73 @@ export class EmailService {
     }
   }
 
+  async sendEmail(emailData: {
+    to: {
+      email: string;
+      name?: string;
+    }[];
+    from?: {
+      email: string;
+      name?: string;
+    };
+    subject: string;
+    html?: string;
+    text?: string;
+    cc?: {
+      email: string;
+      name?: string;
+    }[];
+    bcc?: {
+      email: string;
+      name?: string;
+    }[];
+    replyTo?: {
+      email: string;
+      name?: string;
+    };
+    systemUsage?: string;
+  }) {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/auth/email/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(
+          (typeof errorData === "object" &&
+          errorData !== null &&
+          "message" in errorData
+            ? (errorData as { message?: string }).message
+            : undefined) || `HTTP ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to send system email:", error);
+      throw error;
+    }
+  }
+
   // Convenience methods for auth flows
   async sendVerificationEmail(
     user: { email: string; name?: string },
     verificationUrl: string
   ) {
-    return this.sendSystemEmail({
-      to: user.email,
+    return this.sendEmail({
+      to: [
+        {
+          email: user.email,
+          name: user.name,
+        },
+      ],
       subject: "Verify your email address",
       html: verificationEmailTemplate(user, verificationUrl),
       systemUsage: "email-verification",
