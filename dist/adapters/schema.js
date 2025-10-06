@@ -2,10 +2,12 @@ import { z } from "zod";
 // Validation schemas
 export const sendEmailSchema = z.object({
     to: z.array(z.object({ email: z.email(), name: z.string().optional() })),
-    from: z.object({
+    from: z
+        .object({
         email: z.email(),
         name: z.string().optional(),
-    }),
+    })
+        .optional(),
     subject: z.string().min(1),
     html: z.string().optional(),
     text: z.string().optional(),
@@ -15,10 +17,12 @@ export const sendEmailSchema = z.object({
     bcc: z
         .array(z.object({ email: z.email(), name: z.string().optional() }))
         .optional(),
-    replyTo: z.object({
+    replyTo: z
+        .object({
         email: z.email(),
         name: z.string().optional(),
-    }),
+    })
+        .optional(),
     tags: z
         .array(z.object({
         name: z.string(),

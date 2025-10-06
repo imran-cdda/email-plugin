@@ -63,10 +63,12 @@ export const email = (options) => {
             body: z
                 .object({
                 to: z.array(z.object({ email: z.email(), name: z.string().optional() })),
-                from: z.object({
+                from: z
+                    .object({
                     email: z.email(),
                     name: z.string().optional(),
-                }),
+                })
+                    .optional(),
                 subject: z.string().min(1),
                 html: z.string().optional(),
                 text: z.string().optional(),
@@ -76,10 +78,12 @@ export const email = (options) => {
                 bcc: z
                     .array(z.object({ email: z.email(), name: z.string().optional() }))
                     .optional(),
-                replyTo: z.object({
+                replyTo: z
+                    .object({
                     email: z.email(),
                     name: z.string().optional(),
-                }),
+                })
+                    .optional(),
                 tags: z
                     .array(z.object({
                     name: z.string(),
@@ -119,6 +123,7 @@ export const email = (options) => {
                 if (!fromAddress) {
                     throw createValidationError("BAD_REQUEST", "From address is required", EMAIL_ERROR_CODES.INVALID_EMAIL_ADDRESS);
                 }
+                const replyTo = ctx.body.replyTo || options?.replyToAddress;
                 // Get adapter
                 const adapter = ctx.body.provider
                     ? adapters.get(ctx.body.provider) || getDefaultAdapter()
@@ -126,13 +131,19 @@ export const email = (options) => {
                 // Prepare email request
                 const emailRequest = {
                     to: ctx.body.to,
-                    from: fromAddress,
+                    ...(fromAddress && {
+                        from: typeof fromAddress === "string"
+                            ? { email: fromAddress }
+                            : fromAddress,
+                    }),
                     subject: ctx.body.subject,
                     html: ctx.body.html,
                     text: ctx.body.text,
                     cc: ctx.body.cc,
                     bcc: ctx.body.bcc,
-                    replyTo: ctx.body.replyTo || options?.replyToAddress,
+                    ...(replyTo && {
+                        replyTo: typeof replyTo === "string" ? { email: replyTo } : replyTo,
+                    }),
                     tags: ctx.body.tags,
                     attachments: ctx.body.attachments,
                 };
@@ -140,13 +151,11 @@ export const email = (options) => {
                 const emailLogId = generateEmailId();
                 const contentType = determineContentType(ctx.body.html, ctx.body.text);
                 const emailLogData = {
-                    fromAddress: fromAddress.email,
+                    fromAddress: typeof fromAddress === "string" ? fromAddress : fromAddress.email,
                     toAddress: arrayToString(toEmails) || toEmails[0],
                     ccAddress: arrayToString(ccEmails),
                     bccAddress: arrayToString(bccEmails),
-                    replyToAddress: ctx.body.replyTo
-                        ? ctx.body.replyTo.email
-                        : options?.replyToAddress,
+                    replyToAddress: typeof replyTo === "string" ? replyTo : replyTo?.email,
                     subject: ctx.body.subject,
                     content: sanitizeEmailContent(ctx.body.html || ctx.body.text || ""),
                     contentType,
@@ -282,7 +291,7 @@ export const email = (options) => {
                     const contentType = determineContentType(email.html, email.text);
                     const toEmails = validateEmailArray(email.to.map((to) => to.email));
                     const emailLogData = {
-                        fromAddress: email.from.email,
+                        fromAddress: email?.from?.email || options?.fromAddress || "",
                         toAddress: arrayToString(toEmails) || toEmails[0],
                         ccAddress: email.cc
                             ? arrayToString(validateEmailArray(email.cc.map((cc) => cc.email)))
@@ -290,7 +299,7 @@ export const email = (options) => {
                         bccAddress: email.bcc
                             ? arrayToString(validateEmailArray(email.bcc.map((bcc) => bcc.email)))
                             : undefined,
-                        replyToAddress: email.replyTo.email,
+                        replyToAddress: email?.replyTo?.email || options?.replyToAddress,
                         subject: email.subject,
                         content: sanitizeEmailContent(email.html || email.text || ""),
                         contentType,

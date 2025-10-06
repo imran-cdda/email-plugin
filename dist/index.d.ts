@@ -35,15 +35,11 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                         email: string;
                         name?: string | undefined;
                     }[];
-                    from: {
-                        email: string;
-                        name?: string | undefined;
-                    };
                     subject: string;
-                    replyTo: {
+                    from?: {
                         email: string;
                         name?: string | undefined;
-                    };
+                    } | undefined;
                     html?: string | undefined;
                     text?: string | undefined;
                     cc?: {
@@ -54,6 +50,10 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                         email: string;
                         name?: string | undefined;
                     }[] | undefined;
+                    replyTo?: {
+                        email: string;
+                        name?: string | undefined;
+                    } | undefined;
                     tags?: {
                         name: string;
                         value: string;
@@ -105,10 +105,10 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                         email: z.ZodEmail;
                         name: z.ZodOptional<z.ZodString>;
                     }, z.core.$strip>>;
-                    from: z.ZodObject<{
+                    from: z.ZodOptional<z.ZodObject<{
                         email: z.ZodEmail;
                         name: z.ZodOptional<z.ZodString>;
-                    }, z.core.$strip>;
+                    }, z.core.$strip>>;
                     subject: z.ZodString;
                     html: z.ZodOptional<z.ZodString>;
                     text: z.ZodOptional<z.ZodString>;
@@ -120,10 +120,10 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                         email: z.ZodEmail;
                         name: z.ZodOptional<z.ZodString>;
                     }, z.core.$strip>>>;
-                    replyTo: z.ZodObject<{
+                    replyTo: z.ZodOptional<z.ZodObject<{
                         email: z.ZodEmail;
                         name: z.ZodOptional<z.ZodString>;
-                    }, z.core.$strip>;
+                    }, z.core.$strip>>;
                     tags: z.ZodOptional<z.ZodArray<z.ZodObject<{
                         name: z.ZodString;
                         value: z.ZodString;

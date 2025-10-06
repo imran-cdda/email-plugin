@@ -88,8 +88,8 @@ export class BrevoEmailAdapter extends baseAdapter {
   async sendEmail(email: SendEmailRequest): Promise<SendEmailResponse> {
     const emailData: SendSmtpEmail = {
       sender: {
-        email: email.from.email,
-        name: email.from.name,
+        email: email?.from?.email,
+        name: email?.from?.name || "",
       } as EmailContact,
       to: email.to as EmailContact[],
       cc: email.cc as EmailContact[],
