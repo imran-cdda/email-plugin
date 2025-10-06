@@ -822,6 +822,32 @@ export declare class EmailService {
         replyTo?: string;
         systemUsage?: string;
     }): Promise<any>;
+    sendEmail(emailData: {
+        to: {
+            email: string;
+            name?: string;
+        }[];
+        from?: {
+            email: string;
+            name?: string;
+        };
+        subject: string;
+        html?: string;
+        text?: string;
+        cc?: {
+            email: string;
+            name?: string;
+        }[];
+        bcc?: {
+            email: string;
+            name?: string;
+        }[];
+        replyTo?: {
+            email: string;
+            name?: string;
+        };
+        systemUsage?: string;
+    }): Promise<any>;
     sendVerificationEmail(user: {
         email: string;
         name?: string;

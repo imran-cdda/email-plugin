@@ -772,10 +772,41 @@ export class EmailService {
             throw error;
         }
     }
+    async sendEmail(emailData) {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/auth/email/send`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(emailData),
+            });
+            if (!response.ok) {
+                const errorData = await response
+                    .json()
+                    .catch(() => ({ message: "Unknown error" }));
+                throw new Error((typeof errorData === "object" &&
+                    errorData !== null &&
+                    "message" in errorData
+                    ? errorData.message
+                    : undefined) || `HTTP ${response.status}`);
+            }
+            return await response.json();
+        }
+        catch (error) {
+            console.error("Failed to send system email:", error);
+            throw error;
+        }
+    }
     // Convenience methods for auth flows
     async sendVerificationEmail(user, verificationUrl) {
-        return this.sendSystemEmail({
-            to: user.email,
+        return this.sendEmail({
+            to: [
+                {
+                    email: user.email,
+                    name: user.name,
+                },
+            ],
             subject: "Verify your email address",
             html: verificationEmailTemplate(user, verificationUrl),
             systemUsage: "email-verification",
