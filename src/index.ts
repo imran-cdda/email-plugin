@@ -1045,14 +1045,29 @@ export class EmailService {
   }
 
   async sendSystemEmail(emailData: {
-    to: string | string[];
-    from?: string;
+    to: {
+      email: string;
+      name?: string;
+    }[];
+    from?: {
+      email: string;
+      name?: string;
+    };
     subject: string;
     html?: string;
     text?: string;
-    cc?: string | string[];
-    bcc?: string | string[];
-    replyTo?: string;
+    cc?: {
+      email: string;
+      name?: string;
+    }[];
+    bcc?: {
+      email: string;
+      name?: string;
+    }[];
+    replyTo?: {
+      email: string;
+      name?: string;
+    };
     systemUsage?: string;
   }) {
     try {
@@ -1082,7 +1097,7 @@ export class EmailService {
 
       return await response.json();
     } catch (error) {
-      console.error("Failed to send system email:", error);
+      console.error("Failed to send email:", error);
       throw error;
     }
   }
@@ -1113,10 +1128,6 @@ export class EmailService {
     };
     systemUsage?: string;
   }) {
-    console.log(
-      "Sending email to <--------------------> ",
-      JSON.stringify(emailData, null, 2)
-    );
     try {
       const response = await fetch(`${this.baseUrl}/api/auth/email/send`, {
         method: "POST",
@@ -1125,8 +1136,6 @@ export class EmailService {
         },
         body: JSON.stringify(emailData),
       });
-
-      console.log("Email response --------------------> ", response);
 
       if (!response.ok) {
         const errorData = await response
@@ -1158,7 +1167,7 @@ export class EmailService {
       user.email
     );
 
-    return this.sendEmail({
+    return this.sendSystemEmail({
       to: [
         {
           email: user.email,
@@ -1173,7 +1182,12 @@ export class EmailService {
 
   async sendWelcomeEmail(user: { email: string; name?: string }) {
     return this.sendSystemEmail({
-      to: user.email,
+      to: [
+        {
+          email: user.email,
+          name: user.name,
+        },
+      ],
       subject: "Welcome! Your account is verified",
       html: welcomeEmailTemplate(user),
       systemUsage: "welcome-email",
@@ -1185,7 +1199,12 @@ export class EmailService {
     resetUrl: string
   ) {
     return this.sendSystemEmail({
-      to: user.email,
+      to: [
+        {
+          email: user.email,
+          name: user.name,
+        },
+      ],
       subject: "Reset your password",
       html: passwordResetEmailTemplate(user, resetUrl),
       systemUsage: "password-reset",
