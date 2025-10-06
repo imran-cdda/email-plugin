@@ -463,18 +463,6 @@ export const email = (options) => {
         /**
          * ### Endpoint
          *
-         * POST `/email/webhook`
-         *
-         * ### API Methods
-         *
-         * **server:**
-         * `auth.api.handleEmailWebhook`
-         *
-         * Handles webhooks from email providers to update email status
-         */
-        /**
-         * ### Endpoint
-         *
          * POST `/email/send-system`
          *
          * ### API Methods
@@ -490,7 +478,12 @@ export const email = (options) => {
             body: z
                 .object({
                 to: z.array(z.object({ email: z.email(), name: z.string().optional() })),
-                from: z.string().email().optional(),
+                from: z
+                    .object({
+                    email: z.email(),
+                    name: z.string().optional(),
+                })
+                    .optional(),
                 subject: z.string().min(1),
                 html: z.string().optional(),
                 text: z.string().optional(),
@@ -500,25 +493,32 @@ export const email = (options) => {
                 bcc: z
                     .array(z.object({ email: z.email(), name: z.string().optional() }))
                     .optional(),
-                replyTo: z.object({
+                replyTo: z
+                    .object({
                     email: z.email(),
                     name: z.string().optional(),
-                }),
+                })
+                    .optional(),
                 tags: z
                     .array(z.object({
                     name: z.string(),
                     value: z.string(),
                 }))
                     .optional(),
+                attachments: z
+                    .array(z.object({
+                    url: z.string().optional(),
+                    filename: z.string(),
+                    content: z.union([z.string(), z.instanceof(Buffer)]),
+                    contentType: z.string().optional(),
+                }))
+                    .optional(),
                 provider: z.enum(["resend", "sendgrid", "bravo"]).optional(),
-                // System identifier for tracking
-                systemUsage: z.string().optional(),
             })
                 .refine((data) => data.html || data.text, {
                 message: "Either html or text content is required",
                 path: ["content"],
             }),
-            // No authentication middleware - system can send emails
         }, async (ctx) => {
             try {
                 // Validate email addresses
@@ -534,6 +534,7 @@ export const email = (options) => {
                 if (!fromAddress) {
                     throw createValidationError("BAD_REQUEST", "From address is required", EMAIL_ERROR_CODES.INVALID_EMAIL_ADDRESS);
                 }
+                const replyTo = ctx.body.replyTo || options?.replyToAddress;
                 // Get adapter
                 const adapter = ctx.body.provider
                     ? adapters.get(ctx.body.provider) || getDefaultAdapter()
@@ -541,35 +542,37 @@ export const email = (options) => {
                 // Prepare email request
                 const emailRequest = {
                     to: ctx.body.to,
-                    from: { email: fromAddress },
+                    ...(fromAddress && {
+                        from: typeof fromAddress === "string"
+                            ? { email: fromAddress }
+                            : fromAddress,
+                    }),
                     subject: ctx.body.subject,
                     html: ctx.body.html,
                     text: ctx.body.text,
                     cc: ctx.body.cc,
                     bcc: ctx.body.bcc,
-                    replyTo: ctx.body.replyTo || options?.replyToAddress,
+                    ...(replyTo && {
+                        replyTo: typeof replyTo === "string" ? { email: replyTo } : replyTo,
+                    }),
                     tags: ctx.body.tags,
+                    attachments: ctx.body.attachments,
                 };
                 // Prepare email log data first (before sending)
                 const emailLogId = generateEmailId();
                 const contentType = determineContentType(ctx.body.html, ctx.body.text);
                 const emailLogData = {
-                    fromAddress,
+                    fromAddress: typeof fromAddress === "string" ? fromAddress : fromAddress.email,
                     toAddress: arrayToString(toEmails) || toEmails[0],
                     ccAddress: arrayToString(ccEmails),
                     bccAddress: arrayToString(bccEmails),
-                    replyToAddress: ctx.body.replyTo.email || options?.replyToAddress,
+                    replyToAddress: typeof replyTo === "string" ? replyTo : replyTo?.email,
                     subject: ctx.body.subject,
                     content: sanitizeEmailContent(ctx.body.html || ctx.body.text || ""),
                     contentType,
                     status: "pending",
                     provider: adapter.name,
-                    // No userId for system emails
-                    userId: undefined,
                     tags: ctx.body.tags ? JSON.stringify(ctx.body.tags) : undefined,
-                    metadata: ctx.body.systemUsage
-                        ? JSON.stringify({ systemUsage: ctx.body.systemUsage })
-                        : undefined,
                 };
                 // Send email
                 const sendResult = await adapter.adapter.sendEmail(emailRequest);
@@ -606,7 +609,7 @@ export const email = (options) => {
                     success: true,
                     emailId: emailLog.id,
                     providerId: sendResult.providerId,
-                    message: "System email sent successfully",
+                    message: "Email sent successfully",
                 };
             }
             catch (error) {
@@ -616,6 +619,18 @@ export const email = (options) => {
                 throw createValidationError("INTERNAL_SERVER_ERROR", error instanceof Error ? error.message : "Unknown error occurred", EMAIL_ERROR_CODES.SEND_FAILED);
             }
         }),
+        /**
+         * ### Endpoint
+         *
+         * POST `/email/webhook`
+         *
+         * ### API Methods
+         *
+         * **server:**
+         * `auth.api.handleEmailWebhook`
+         *
+         * Handles webhooks from email providers to update email status
+         */
         handleEmailWebhook: createAuthEndpoint("/email/webhook", {
             method: "POST",
             metadata: {

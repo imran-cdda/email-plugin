@@ -502,18 +502,6 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
         /**
          * ### Endpoint
          *
-         * POST `/email/webhook`
-         *
-         * ### API Methods
-         *
-         * **server:**
-         * `auth.api.handleEmailWebhook`
-         *
-         * Handles webhooks from email providers to update email status
-         */
-        /**
-         * ### Endpoint
-         *
          * POST `/email/send-system`
          *
          * ### API Methods
@@ -532,11 +520,10 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                         name?: string | undefined;
                     }[];
                     subject: string;
-                    replyTo: {
+                    from?: {
                         email: string;
                         name?: string | undefined;
-                    };
-                    from?: string | undefined;
+                    } | undefined;
                     html?: string | undefined;
                     text?: string | undefined;
                     cc?: {
@@ -547,12 +534,21 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                         email: string;
                         name?: string | undefined;
                     }[] | undefined;
+                    replyTo?: {
+                        email: string;
+                        name?: string | undefined;
+                    } | undefined;
                     tags?: {
                         name: string;
                         value: string;
                     }[] | undefined;
+                    attachments?: {
+                        filename: string;
+                        content: string | Buffer<ArrayBufferLike>;
+                        url?: string | undefined;
+                        contentType?: string | undefined;
+                    }[] | undefined;
                     provider?: "resend" | "sendgrid" | "bravo" | undefined;
-                    systemUsage?: string | undefined;
                 };
             } & {
                 method?: "POST" | undefined;
@@ -593,7 +589,10 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                         email: z.ZodEmail;
                         name: z.ZodOptional<z.ZodString>;
                     }, z.core.$strip>>;
-                    from: z.ZodOptional<z.ZodString>;
+                    from: z.ZodOptional<z.ZodObject<{
+                        email: z.ZodEmail;
+                        name: z.ZodOptional<z.ZodString>;
+                    }, z.core.$strip>>;
                     subject: z.ZodString;
                     html: z.ZodOptional<z.ZodString>;
                     text: z.ZodOptional<z.ZodString>;
@@ -605,26 +604,43 @@ export declare const email: <O extends EmailOptions>(options?: O) => {
                         email: z.ZodEmail;
                         name: z.ZodOptional<z.ZodString>;
                     }, z.core.$strip>>>;
-                    replyTo: z.ZodObject<{
+                    replyTo: z.ZodOptional<z.ZodObject<{
                         email: z.ZodEmail;
                         name: z.ZodOptional<z.ZodString>;
-                    }, z.core.$strip>;
+                    }, z.core.$strip>>;
                     tags: z.ZodOptional<z.ZodArray<z.ZodObject<{
                         name: z.ZodString;
                         value: z.ZodString;
+                    }, z.core.$strip>>>;
+                    attachments: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        url: z.ZodOptional<z.ZodString>;
+                        filename: z.ZodString;
+                        content: z.ZodUnion<readonly [z.ZodString, z.ZodCustom<Buffer<ArrayBufferLike>, Buffer<ArrayBufferLike>>]>;
+                        contentType: z.ZodOptional<z.ZodString>;
                     }, z.core.$strip>>>;
                     provider: z.ZodOptional<z.ZodEnum<{
                         resend: "resend";
                         sendgrid: "sendgrid";
                         bravo: "bravo";
                     }>>;
-                    systemUsage: z.ZodOptional<z.ZodString>;
                 }, z.core.$strip>;
             } & {
                 use: any[];
             };
             path: "/email/send-system";
         };
+        /**
+         * ### Endpoint
+         *
+         * POST `/email/webhook`
+         *
+         * ### API Methods
+         *
+         * **server:**
+         * `auth.api.handleEmailWebhook`
+         *
+         * Handles webhooks from email providers to update email status
+         */
         handleEmailWebhook: {
             <AsResponse extends boolean = false, ReturnHeaders extends boolean = false>(inputCtx_0?: ({
                 body?: undefined;
